@@ -1,6 +1,6 @@
-<MODULE_NAME>
-<PYPI_NAME>
-<REPO_NAME>
-<RTD_NAME>
-<PROJECT_NAME>
-<SHORT_DESCRIPTION>
+eth_enr
+eth-enr
+eth-enr
+eth-enr
+Ethereum Name Record (ENR) library for Python
+Python library for ENR (EIP-778) records

@@ -1,7 +1,7 @@
-<PROJECT_NAME>
+Ethereum Name Record (ENR) library for Python
 ==============================
 
-<SHORT_DESCRIPTION>
+Python library for ENR (EIP-778) records
 
 Contents
 --------
@@ -9,7 +9,7 @@ Contents
 .. toctree::
     :maxdepth: 3
 
-    <MODULE_NAME>
+    eth_enr
     release_notes
 
 
