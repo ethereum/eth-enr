@@ -7,15 +7,16 @@ from setuptools import (
 
 extras_require = {
     'test': [
-        "pytest==5.4.1",
-        "pytest-xdist",
-        "tox==3.14.6",
+        "pytest==6.0.1",
+        "pytest-xdist==2.1.0",
+        "tox==3.19.0",
     ],
     'lint': [
-        "flake8==3.7.9",
-        "isort>=4.2.15,<5",
-        "mypy==0.770",
+        "flake8==3.8.3",
+        "isort==5.4.2",
+        "mypy==0.782",
         "pydocstyle>=3.0.0,<4",
+        "black==20.8b1",
     ],
     'doc': [
         "Sphinx>=1.6.5,<2",
@@ -72,6 +73,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
 )

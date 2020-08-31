@@ -27,7 +27,8 @@ lint:
 	tox -elint
 
 lint-roll:
-	isort --recursive eth_enr tests
+	isort eth_enr tests
+	black eth_enr tests
 	$(MAKE) lint
 
 test:
