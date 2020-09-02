@@ -57,13 +57,10 @@ setup(
     url='https://github.com/ethereum/eth-enr',
     include_package_data=True,
     install_requires=[
-        "coincurve>=10.0.0,<11.0.0",
-        "cryptography==3.0",
         "eth-hash[pycryptodome]>=0.1.4,<1",
         "eth-keys>=0.3.3,<0.4.0",
         "eth-utils>=1,<2",
         "rlp>=1.1.0,<2.0.0",
-        "trio>=0.16.0,<0.17",
     ],
     python_requires='>=3.6, <4',
     extras_require=extras_require,

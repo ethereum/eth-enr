@@ -9,7 +9,8 @@ Contents
 .. toctree::
     :maxdepth: 3
 
-    eth_enr
+    quickstart
+    api
     release_notes
 
 

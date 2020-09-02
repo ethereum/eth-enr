@@ -1,7 +1,3 @@
-AES128_KEY_SIZE = 16  # size of an AES218 key
-HKDF_INFO = b"discovery v5 key agreement"
-ID_NONCE_SIGNATURE_PREFIX = b"discovery-id-nonce"
-
 IDENTITY_SCHEME_ENR_KEY = b"id"
 ENR_REPR_PREFIX = "enr:"  # prefix used when printing an ENR
 MAX_ENR_SIZE = 300  # maximum allowed size of an ENR
