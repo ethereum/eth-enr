@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from collections import UserDict
-from typing import TYPE_CHECKING, Any, Mapping, Tuple, Type
+from typing import TYPE_CHECKING, Any, Mapping, Type
 
-from eth_enr.typing import ENR_KV, IDNonce, NodeID
+from eth_enr.typing import ENR_KV, NodeID
 
 # https://github.com/python/mypy/issues/5264#issuecomment-399407428
 if TYPE_CHECKING:
@@ -117,40 +117,4 @@ class IdentitySchemeAPI(ABC):
     @abstractmethod
     def extract_node_id(cls, enr: CommonENRAPI) -> NodeID:
         """Retrieve the node id from an ENR."""
-        ...
-
-    #
-    # Handshake
-    #
-    @classmethod
-    @abstractmethod
-    def create_handshake_key_pair(cls) -> Tuple[bytes, bytes]:
-        """Create a random private/public key pair used for performing a handshake."""
-        ...
-
-    @classmethod
-    @abstractmethod
-    def validate_handshake_public_key(cls, public_key: bytes) -> None:
-        """Validate that a public key received during handshake is valid."""
-        ...
-
-    @classmethod
-    @abstractmethod
-    def create_id_nonce_signature(
-        cls, *, id_nonce: IDNonce, ephemeral_public_key: bytes, private_key: bytes
-    ) -> bytes:
-        """Sign an id nonce received during handshake."""
-        ...
-
-    @classmethod
-    @abstractmethod
-    def validate_id_nonce_signature(
-        cls,
-        *,
-        id_nonce: IDNonce,
-        ephemeral_public_key: bytes,
-        signature: bytes,
-        public_key: bytes,
-    ) -> None:
-        """Validate the id nonce signature received from a peer."""
         ...

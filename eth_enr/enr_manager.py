@@ -3,17 +3,15 @@ from typing import Mapping, Optional
 
 from eth_keys import keys
 from eth_utils.toolz import merge
-import trio
 
 from eth_enr.abc import ENRAPI, ENRManagerAPI, IdentitySchemeRegistryAPI
 from eth_enr.enr import UnsignedENR
 from eth_enr.identity_schemes import default_identity_scheme_registry
-from eth_enr.typing import ENR_KV, NodeID
+from eth_enr.typing import ENR_KV
 
 
 class ENRManager(ENRManagerAPI):
     _enr: ENRAPI
-    _node_id: NodeID
     _identity_scheme_registry: IdentitySchemeRegistryAPI
 
     logger = logging.getLogger("eth_enr.ENRManager")
@@ -27,7 +25,6 @@ class ENRManager(ENRManagerAPI):
     ) -> None:
         self._identity_scheme_registry = identity_scheme_registry
         self._private_key = private_key
-        self._send_channel, self._receive_channel = trio.open_memory_channel[ENR_KV](0)
 
         if kv_pairs is None:
             kv_pairs = {}
@@ -45,7 +42,6 @@ class ENRManager(ENRManagerAPI):
             kv_pairs=merge(identity_kv_pairs, kv_pairs),
             identity_scheme_registry=self._identity_scheme_registry,
         ).to_signed_enr(self._private_key.to_bytes())
-        self._node_id = minimal_enr.node_id
 
         if base_enr is None:
             self.logger.info(
