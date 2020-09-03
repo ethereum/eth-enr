@@ -61,7 +61,7 @@ setup(
         "eth-keys>=0.3.3,<0.4.0",
         "eth-utils>=1,<2",
         "eth-typing>=2.2.2,<3",
-        "rlp>=1.1.0,<2.0.0",
+        "rlp>=2.0.0a1,<3.0.0",
     ],
     python_requires='>=3.6, <4',
     extras_require=extras_require,
@@ -80,6 +80,5 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: Implementation :: PyPy',
     ],
 )
