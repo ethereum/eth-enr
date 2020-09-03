@@ -14,6 +14,7 @@ from eth_enr.abc import (
     UnsignedENRAPI,
 )
 from eth_enr.constants import ENR_REPR_PREFIX, IDENTITY_SCHEME_ENR_KEY
+from eth_enr.exceptions import UnknownIdentityScheme
 from eth_enr.identity_schemes import (
     default_identity_scheme_registry as default_id_scheme_registry,
 )
@@ -50,7 +51,7 @@ class ENRCommon(CommonENRAPI):
         try:
             return identity_scheme_registry[identity_scheme_id]
         except KeyError:
-            raise ValidationError(
+            raise UnknownIdentityScheme(
                 f"ENR uses unsupported identity scheme {identity_scheme_id}"
             )
 

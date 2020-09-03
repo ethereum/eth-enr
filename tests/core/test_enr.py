@@ -7,6 +7,7 @@ import rlp
 
 from eth_enr.abc import IdentitySchemeAPI
 from eth_enr.enr import ENR, UnsignedENR
+from eth_enr.exceptions import UnknownIdentityScheme
 from eth_enr.identity_schemes import IdentitySchemeRegistry, V4IdentityScheme
 from eth_enr.sedes import ENRSedes
 
@@ -211,7 +212,7 @@ def test_signature_validation(mock_identity_scheme, identity_scheme_registry):
     with pytest.raises(ValidationError):
         invalid_enr.validate_signature()
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(UnknownIdentityScheme):
         ENR(
             0,
             {b"id": b"unknown"},
@@ -243,7 +244,7 @@ def test_signature_scheme_selection(mock_identity_scheme, identity_scheme_regist
     )
     assert v4_enr.identity_scheme is V4IdentityScheme
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(UnknownIdentityScheme):
         ENR(0, {b"id": b"other"}, b"", identity_scheme_registry)
 
 

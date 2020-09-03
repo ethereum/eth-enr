@@ -80,7 +80,12 @@ class ENRManagerAPI(ABC):
         ...
 
     @abstractmethod
-    def update(self, *kv_pairs: ENR_KV) -> ENRAPI:
+    def update(self, *kv_pairs: ENR_KV) -> None:
+        """
+        Update the ENR record with the provided key/value pairs.  Providing
+        `None` for a value will result in the associated key being removed from
+        the ENR.
+        """
         ...
 
 
@@ -119,4 +124,18 @@ class IdentitySchemeAPI(ABC):
     @abstractmethod
     def extract_node_id(cls, enr: CommonENRAPI) -> NodeID:
         """Retrieve the node id from an ENR."""
+        ...
+
+
+class ENRDatabaseAPI(ABC):
+    @abstractmethod
+    def set_enr(self, enr: ENRAPI) -> None:
+        ...
+
+    @abstractmethod
+    def get_enr(self, node_id: NodeID) -> ENRAPI:
+        ...
+
+    @abstractmethod
+    def delete_enr(self, node_id: NodeID) -> None:
         ...
