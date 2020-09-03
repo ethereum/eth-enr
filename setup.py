@@ -60,6 +60,7 @@ setup(
         "eth-hash[pycryptodome]>=0.1.4,<1",
         "eth-keys>=0.3.3,<0.4.0",
         "eth-utils>=1,<2",
+        "eth-typing>=2.2.2,<3",
         "rlp>=1.1.0,<2.0.0",
     ],
     python_requires='>=3.6, <4',

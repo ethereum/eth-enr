@@ -2,7 +2,9 @@ from abc import ABC, abstractmethod
 from collections import UserDict
 from typing import TYPE_CHECKING, Any, Mapping, Type
 
-from eth_enr.typing import ENR_KV, NodeID
+from eth_typing import NodeID
+
+from eth_enr.typing import ENR_KV
 
 # https://github.com/python/mypy/issues/5264#issuecomment-399407428
 if TYPE_CHECKING:

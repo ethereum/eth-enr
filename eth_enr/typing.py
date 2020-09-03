@@ -1,5 +1,3 @@
-from typing import NewType, Tuple, Union
-
-NodeID = NewType("NodeID", bytes)
+from typing import Tuple, Union
 
 ENR_KV = Tuple[bytes, Union[int, bytes]]
