@@ -48,7 +48,7 @@ with open('./README.md') as readme:
 setup(
     name='eth-enr',
     # *IMPORTANT*: Don't manually change the version here. Use `make bump`, as described in readme
-    version='0.2.2',
+    version='0.3.0',
     description="""eth-enr: Python library for ENR (EIP-778) records""",
     long_description=long_description,
     long_description_content_type='text/markdown',
