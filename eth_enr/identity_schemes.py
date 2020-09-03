@@ -3,6 +3,7 @@ from typing import Type
 from eth_keys.datatypes import NonRecoverableSignature, PrivateKey, PublicKey
 from eth_keys.exceptions import BadSignature
 from eth_keys.exceptions import ValidationError as EthKeysValidationError
+from eth_typing import NodeID
 from eth_utils import ValidationError, encode_hex, keccak
 
 from eth_enr.abc import (
@@ -11,7 +12,6 @@ from eth_enr.abc import (
     IdentitySchemeAPI,
     IdentitySchemeRegistryAPI,
 )
-from eth_enr.typing import NodeID
 
 
 class IdentitySchemeRegistry(IdentitySchemeRegistryAPI):

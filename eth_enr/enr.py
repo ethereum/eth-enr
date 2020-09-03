@@ -2,6 +2,7 @@ import base64
 import operator
 from typing import AbstractSet, Any, Iterator, Mapping, Tuple, Type, ValuesView
 
+from eth_typing import NodeID
 from eth_utils import ValidationError
 import rlp
 
@@ -18,7 +19,6 @@ from eth_enr.identity_schemes import (
 )
 from eth_enr.identity_schemes import IdentitySchemeRegistry
 from eth_enr.sedes import ENRContentSedes, ENRSedes
-from eth_enr.typing import NodeID
 
 
 class ENRCommon(CommonENRAPI):
