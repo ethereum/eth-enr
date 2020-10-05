@@ -8,7 +8,9 @@ from eth_keys import keys
 from eth_utils import int_to_big_endian
 from eth_utils.toolz import merge
 import factory
+from faker import Faker
 
+from eth_enr.abc import ENRAPI
 from eth_enr.enr import ENR, UnsignedENR
 from eth_enr.identity_schemes import V4IdentityScheme
 
@@ -107,3 +109,19 @@ class ENRFactory(factory.Factory):  # type: ignore
         private_key = factory.Faker("binary", length=V4IdentityScheme.private_key_size)
         address = factory.SubFactory(AddressFactory)
         custom_kv_pairs: Dict[bytes, Any] = {}
+
+    @classmethod
+    def minimal(cls) -> ENRAPI:
+        private_key = PrivateKeyFactory()
+        kv_pairs = {
+            b"id": b"v4",
+            b"secp256k1": private_key.public_key.to_compressed_bytes(),
+        }
+        return cls(private_key=private_key.to_bytes(), kv_pairs=kv_pairs)
+
+
+_faker = Faker()
+
+
+def IPv6Factory() -> ipaddress.IPv6Address:
+    return ipaddress.IPv6Address(_faker.ipv6())

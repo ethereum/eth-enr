@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import UserDict
-from typing import TYPE_CHECKING, Any, Mapping, Type
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, Type
 
 from eth_typing import NodeID
 
@@ -138,4 +138,14 @@ class ENRDatabaseAPI(ABC):
 
     @abstractmethod
     def delete_enr(self, node_id: NodeID) -> None:
+        ...
+
+
+class ConstraintAPI(ABC):
+    ...
+
+
+class QueryableENRDatabaseAPI(ENRDatabaseAPI):
+    @abstractmethod
+    def query(self, *constraints: ConstraintAPI) -> Iterable[ENRAPI]:
         ...

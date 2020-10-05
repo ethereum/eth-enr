@@ -18,6 +18,7 @@ extras_require = {
         "mypy==0.782",
         "pydocstyle>=3.0.0,<4",
         "black==20.8b1",
+        "sqlalchemy-stubs==0.3",
     ],
     'doc': [
         "Sphinx>=1.6.5,<2",
@@ -31,13 +32,17 @@ extras_require = {
         "twine",
         "ipython",
     ],
+    'orm': [
+        "SQLAlchemy>=1.3.19,<1.4",
+    ]
 }
 
 extras_require['dev'] = (
     extras_require['dev'] +  # noqa: W504
     extras_require['test'] +  # noqa: W504
     extras_require['lint'] +  # noqa: W504
-    extras_require['doc']
+    extras_require['doc'] +  # noqa: W504
+    extras_require['orm']
 )
 
 

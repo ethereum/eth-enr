@@ -3,12 +3,19 @@ import pytest
 from eth_enr.enr_db import ENRDB
 from eth_enr.exceptions import OldSequenceNumber, UnknownIdentityScheme
 from eth_enr.identity_schemes import IdentitySchemeRegistry
+from eth_enr.query_db import QueryableENRDB
 from eth_enr.tools.factories import ENRFactory, PrivateKeyFactory
 
 
-@pytest.fixture
-def enr_db():
-    return ENRDB({})
+@pytest.fixture(params=("mapping", "orm"))
+def enr_db(request):
+    if request.param == "mapping":
+        return ENRDB({})
+    elif request.param == "orm":
+        session = request.getfixturevalue("session")
+        return QueryableENRDB(session)
+    else:
+        raise Exception(f"Unsupported param: {request.param}")
 
 
 def test_checks_identity_scheme():
