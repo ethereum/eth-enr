@@ -16,3 +16,4 @@ from eth_enr.identity_schemes import (  # noqa: F401
     default_identity_scheme_registry,
     discv4_identity_scheme_registry,
 )
+from eth_enr.query_db import QueryableENRDB  # noqa: F401
