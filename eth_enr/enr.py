@@ -1,9 +1,10 @@
 import base64
+import ipaddress
 import operator
-from typing import AbstractSet, Any, Iterator, Mapping, Tuple, Type, ValuesView
+from typing import AbstractSet, Any, Iterator, Mapping, Tuple, Type, Union, ValuesView
 
 from eth_typing import NodeID
-from eth_utils import ValidationError
+from eth_utils import ValidationError, encode_hex
 import rlp
 
 from eth_enr.abc import (
@@ -13,7 +14,13 @@ from eth_enr.abc import (
     IdentitySchemeRegistryAPI,
     UnsignedENRAPI,
 )
-from eth_enr.constants import ENR_REPR_PREFIX, IDENTITY_SCHEME_ENR_KEY
+from eth_enr.constants import (
+    ENR_REPR_PREFIX,
+    IDENTITY_SCHEME_ENR_KEY,
+    IP_V4_ADDRESS_ENR_KEY,
+    IP_V6_ADDRESS_ENR_KEY,
+    V4_SIGNATURE_KEY,
+)
 from eth_enr.exceptions import UnknownIdentityScheme
 from eth_enr.identity_schemes import (
     default_identity_scheme_registry as default_id_scheme_registry,
@@ -136,6 +143,32 @@ class UnsignedENR(ENRCommon, UnsignedENRAPI):
         return hash((self.sequence_number, sorted_key_value_pairs))
 
 
+def _get_display_str(item: Union[int, bytes]) -> str:
+    if isinstance(item, bytes):
+        try:
+            return item.decode("ascii")
+        except UnicodeDecodeError:
+            return encode_hex(item)
+    elif isinstance(item, int):
+        return str(item)
+    else:
+        raise Exception("Unreachable")
+
+
+def pretty_print_enr_item(key: bytes, value: Union[int, bytes]) -> str:
+    if key == IDENTITY_SCHEME_ENR_KEY:
+        return f"id={_get_display_str(value)}"
+    elif key == V4_SIGNATURE_KEY:
+        return f"secp256k1={encode_hex(value)}"  # type: ignore
+    elif key == IP_V4_ADDRESS_ENR_KEY and isinstance(value, bytes) and len(value) == 4:
+        return f"ip={ipaddress.ip_address(value)}"
+    elif key == IP_V6_ADDRESS_ENR_KEY and isinstance(value, bytes) and len(value) == 16:
+        return f"ip={ipaddress.ip_address(value)}"
+
+    # final fallback if none of the *fancy* display options work.
+    return f"{_get_display_str(key)}={_get_display_str(value)}"
+
+
 class ENR(ENRCommon, ENRSedes, ENRAPI):
     def __init__(
         self,
@@ -181,6 +214,15 @@ class ENR(ENRCommon, ENRSedes, ENRAPI):
     def __hash__(self) -> int:
         sorted_key_value_pairs = tuple(sorted(self.items(), key=operator.itemgetter(0)))
         return hash((self.signature, self.sequence_number, sorted_key_value_pairs))
+
+    def __str__(self) -> str:
+        kv_pairs = "  ".join(
+            (pretty_print_enr_item(key, value) for key, value in sorted(self.items()))
+        )
+        return (
+            f"ENR: seq={self.sequence_number}  node_id={self.node_id.hex()}  "
+            f"sig={self.signature.hex()}  KV: {kv_pairs}"
+        )
 
     def __repr__(self) -> str:
         base64_rlp = base64.urlsafe_b64encode(rlp.encode(self))
