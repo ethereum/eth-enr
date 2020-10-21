@@ -3,8 +3,8 @@ import operator
 from typing import TYPE_CHECKING, Any, Iterable, Sequence, Tuple
 
 from eth_utils import to_dict
-from eth_utils.toolz import cons, interleave
-from rlp.exceptions import DeserializationError
+from eth_utils.toolz import cons, excepts, interleave
+from rlp.exceptions import DeserializationError, EncodingError, SerializationError
 from rlp.sedes import Binary, big_endian_int, binary, raw
 
 from eth_enr.abc import ENRAPI, IdentitySchemeRegistryAPI, UnsignedENRAPI
@@ -48,7 +48,11 @@ class ENRContentSedes:
             for key, value in sorted_key_value_pairs
         )
         serialized_values = tuple(
-            value_serializer.serialize(value)
+            excepts(
+                (EncodingError, SerializationError),
+                value_serializer.serialize,
+                lambda v: FALLBACK_ENR_VALUE_SEDES.serialize(value),
+            )(value)
             for value, value_serializer in values_and_serializers
         )
         return tuple(
@@ -89,7 +93,11 @@ class ENRContentSedes:
             ENR_KEY_SEDES_MAPPING.get(key, FALLBACK_ENR_VALUE_SEDES) for key in keys
         )
         values = tuple(
-            value_deserializer.deserialize(serialized_value)
+            excepts(
+                DeserializationError,
+                value_deserializer.deserialize,
+                lambda v: FALLBACK_ENR_VALUE_SEDES.deserialize(serialized_value),
+            )(serialized_value)
             for value_deserializer, serialized_value in zip(
                 value_deserializers, serialized_values
             )

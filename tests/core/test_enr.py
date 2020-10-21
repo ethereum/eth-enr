@@ -10,6 +10,7 @@ from eth_enr.enr import ENR, UnsignedENR
 from eth_enr.exceptions import UnknownIdentityScheme
 from eth_enr.identity_schemes import IdentitySchemeRegistry, V4IdentityScheme
 from eth_enr.sedes import ENRSedes
+from eth_enr.tools.factories import ENRFactory
 
 # Source: https://github.com/fjl/EIPs/blob/0acb5939555cbd0efcdd04da0d3acb0cc81d049a/EIPS/eip-778.md
 OFFICIAL_TEST_DATA = {
@@ -386,3 +387,23 @@ def test_real_life_test_vector():
     assert enr.identity_scheme is REAL_LIFE_TEST_DATA["identity_scheme"]
     assert dict(enr) == REAL_LIFE_TEST_DATA["kv_pairs"]
     assert repr(enr) == REAL_LIFE_TEST_DATA["repr"]
+
+
+def test_enr_with_non_standard_values_for_standard_keys():
+    custom_kv_pairs = {
+        b"ip": b"too-long-for-ipv4",
+        b"ip6": b"too-short",
+        b"udp": b"\x00\x01\x00",  # invalid encoding for an integer
+        b"tcp": b"\x00\x01\x00",  # invalid encoding for an integer
+        b"udp6": b"\x00\x01\x00",  # invalid encoding for an integer
+        b"tcp6": b"\x00\x01\x00",  # invalid encoding for an integer
+    }
+    enr = ENRFactory(
+        custom_kv_pairs=custom_kv_pairs,
+    )
+
+    for key, value in custom_kv_pairs.items():
+        assert enr[key] == value
+
+    result = ENR.from_repr(repr(enr))
+    assert result == enr

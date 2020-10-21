@@ -40,6 +40,28 @@ def test_get_and_set_enr(enr_db):
         db.set_enr(enr)
 
 
+def test_get_and_set_enr_with_non_standard_values(enr_db):
+    custom_kv_pairs = {
+        b"ip": b"too-long-for-ipv4",
+        b"ip6": b"too-short",
+        b"udp": b"\x00\x01\x00",  # invalid encoding for an integer
+        b"tcp": b"\x00\x01\x00",  # invalid encoding for an integer
+        b"udp6": b"\x00\x01\x00",  # invalid encoding for an integer
+        b"tcp6": b"\x00\x01\x00",  # invalid encoding for an integer
+    }
+    enr = ENRFactory(
+        custom_kv_pairs=custom_kv_pairs,
+    )
+
+    for key, value in custom_kv_pairs.items():
+        assert enr[key] == value
+
+    enr_db.set_enr(enr)
+
+    result = enr_db.get_enr(enr.node_id)
+    assert result == enr
+
+
 def test_delete_enr(enr_db):
     db = enr_db
     enr = ENRFactory()
