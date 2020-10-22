@@ -12,6 +12,7 @@ from eth_enr.abc import (
     IdentitySchemeAPI,
     IdentitySchemeRegistryAPI,
 )
+from eth_enr.constants import V4, V4_SIGNATURE_KEY
 
 
 class IdentitySchemeRegistry(IdentitySchemeRegistryAPI):
@@ -40,8 +41,8 @@ discv4_identity_scheme_registry = IdentitySchemeRegistry()
 @discv4_identity_scheme_registry.register
 class V4IdentityScheme(IdentitySchemeAPI):
 
-    id = b"v4"
-    public_key_enr_key = b"secp256k1"
+    id = V4
+    public_key_enr_key = V4_SIGNATURE_KEY
 
     private_key_size = 32
 
