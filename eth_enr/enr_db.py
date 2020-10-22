@@ -1,11 +1,11 @@
 import logging
-from typing import Iterable, MutableMapping, Optional
+from typing import MutableMapping, Optional
 
 from eth_typing import NodeID
 import rlp
 
 from eth_enr import ENR
-from eth_enr.abc import ENRAPI, ConstraintAPI, ENRDatabaseAPI, IdentitySchemeRegistryAPI
+from eth_enr.abc import ENRAPI, ENRDatabaseAPI, IdentitySchemeRegistryAPI
 from eth_enr.exceptions import OldSequenceNumber, UnknownIdentityScheme
 from eth_enr.identity_schemes import default_identity_scheme_registry
 
@@ -61,6 +61,3 @@ class ENRDB(ENRDatabaseAPI):
 
     def _get_enr_key(self, node_id: NodeID) -> bytes:
         return bytes(node_id) + b":enr"
-
-    def query(self, *constraints: ConstraintAPI) -> Iterable[ENRAPI]:
-        raise NotImplementedError

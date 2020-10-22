@@ -56,6 +56,30 @@ def _get_required_keys(*constraints: ConstraintAPI) -> Iterable[bytes]:
 
 
 class QueryableENRDB(ENRDatabaseAPI):
+    """
+    An implementation of :class:`eth_enr.abc.QueryableENRDatabaseAPI` on top of
+    the ``sqlite3`` module from the standard library.
+
+    For use with an in-memory database:
+
+    .. code-block:: python
+
+        >>> connection = sqlite3.connect(":memory:")
+        >>> enr_db = QueryableENRDB(connection)
+        ...
+
+    Or use with an on-disk database:
+
+    .. code-block:: python
+
+        >>> connection = sqlite3.connect("/path/to/db.sqlite3")
+        >>> enr_db = QueryableENRDB(connection)
+        ...
+
+    The database tables will lazily be created upon class instantiation if they
+    are missing.
+    """
+
     logger = logging.getLogger("eth_enr.ENRDB")
 
     def __init__(
@@ -87,6 +111,13 @@ class QueryableENRDB(ENRDatabaseAPI):
             )
 
     def set_enr(self, enr: ENRAPI) -> None:
+        """
+        Write a record to the database.
+
+        Raises :class:`eth_enr.exceptions.OldSequenceNumber` if there is
+        already a record in the database with the same sequence number as the
+        provided ENR record.
+        """
         record = Record.from_enr(enr)
 
         try:
@@ -95,6 +126,12 @@ class QueryableENRDB(ENRDatabaseAPI):
             raise OldSequenceNumber(enr.sequence_number)
 
     def get_enr(self, node_id: NodeID) -> ENRAPI:
+        """
+        Retrieve the ENR record with the highest sequence number for the given
+        ``node_id``
+
+        Raises ``KeyError`` if there are no records with the geven ``node_id``
+        """
         try:
             record = get_record(self.connection, node_id)
         except RecordNotFound:
@@ -103,12 +140,31 @@ class QueryableENRDB(ENRDatabaseAPI):
         return record.to_enr()
 
     def delete_enr(self, node_id: NodeID) -> None:
+        """
+        Delete ENR records with the given ``node_id``
+
+        Raisees ``KeyError`` if there are no records with the given ``node_id``
+        """
         deleted_rows = delete_record(self.connection, node_id)
 
         if not deleted_rows:
             raise KeyError(node_id)
 
     def query(self, *constraints: ConstraintAPI) -> Iterable[ENRAPI]:
+        """
+        Query the database for records that match the given constraints.
+
+        Support constrants:
+
+        - :class:`~eth_enr.constraints.KeyExists`
+        - :class:`~eth_enr.constraints.HasTCPIPv4Endpoint`
+        - :class:`~eth_enr.constraints.HasUDPIPv4Endpoint`
+        - :class:`~eth_enr.constraints.HasTCPIPv6Endpoint`
+        - :class:`~eth_enr.constraints.HasUDPIPv6Endpoint`
+
+        Return an iterator of matching ENR records.  Only returns the record
+        with the highest sequence number for each node_id.
+        """
         required_keys = _get_required_keys(*constraints)
         for record in query_records(self.connection, required_keys=required_keys):
             yield record.to_enr()

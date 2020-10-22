@@ -130,9 +130,9 @@ using the ``sqlite3`` standard library.
     >>> from eth_keys import keys
     >>> from eth_enr import UnsignedENR, QueryableENRDB
     >>> from eth_enr.constraints import KeyExists
-    >>> private_key_a = keys.PrivateKey(b'unicornsrainbowsunicornsrainbows')
-    >>> private_key_b = keys.PrivateKey(b'rainbowsunicornsrainbowsunicorns')
-    >>> private_key_c = keys.PrivateKey(b'rainbowsunicornsrainbowsunicorns')
+    >>> private_key_a = keys.PrivateKey(b'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+    >>> private_key_b = keys.PrivateKey(b'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')
+    >>> private_key_c = keys.PrivateKey(b'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC')
     >>> enr_a = UnsignedENR(
     ... sequence_number=1,
     ... kv_pairs={

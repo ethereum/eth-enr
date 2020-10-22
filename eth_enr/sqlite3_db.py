@@ -231,8 +231,9 @@ RECORD_GET_QUERY = """SELECT
     record.created_at AS record_created_at
 
     FROM record
-    WHERE record.node_id = ? ORDER BY record.sequence_number DESC
-    LIMIT ? OFFSET ?
+    WHERE record.node_id = ?
+    ORDER BY record.sequence_number DESC
+    LIMIT 1
 """
 
 
@@ -252,7 +253,7 @@ class RecordNotFound(Exception):
 
 
 def get_record(conn: sqlite3.Connection, node_id: NodeID) -> Record:
-    record_row = conn.execute(RECORD_GET_QUERY, (node_id, 1, 0)).fetchone()
+    record_row = conn.execute(RECORD_GET_QUERY, (node_id,)).fetchone()
     if record_row is None:
         raise RecordNotFound(f"No record found: node_id={node_id.hex()}")
     field_rows = conn.execute(FIELD_GET_QUERY, (node_id, record_row[1])).fetchall()
@@ -326,8 +327,8 @@ def query_records(
     logger.debug("query_records: query=%s  params=%r", query, required_keys)
 
     for record_row in conn.execute(query, required_keys):
-        record_row = record_row[:4]
-        field_rows = conn.execute(FIELD_GET_QUERY, (record_row[0], record_row[1]))
+        node_id, sequence_number, *_ = record_row
+        field_rows = conn.execute(FIELD_GET_QUERY, (node_id, sequence_number))
 
         fields = tuple(Field.from_row(row) for row in field_rows.fetchall())
         record = Record.from_row(record_row, fields=fields)
