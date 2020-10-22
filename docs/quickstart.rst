@@ -111,3 +111,58 @@ The :class:`eth_enr.ENRMAnager` automates creation, updating, and storage of ENR
       File "/home/piper/projects/eth-enr/eth_enr/enr.py", line 93, in __getitem__
         return self._kv_pairs[key]
     KeyError: b'foo'
+
+
+Querying ENR Records
+--------------------
+
+You can use the :class:`eth_enr.QueryableENRDB` which exposes the same API as
+:class:`eth_enr.ENRDB` with one additional :meth:`eth_enr.QueryableENRDB.query`
+method.
+
+The :class:`eth_enr.QueryableENRDB` operates on top of any SQLite3 database
+using the ``sqlite3`` standard library.
+
+
+.. doctest::
+
+    >>> import sqlite3
+    >>> from eth_keys import keys
+    >>> from eth_enr import UnsignedENR, QueryableENRDB
+    >>> from eth_enr.constraints import KeyExists
+    >>> private_key_a = keys.PrivateKey(b'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+    >>> private_key_b = keys.PrivateKey(b'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')
+    >>> private_key_c = keys.PrivateKey(b'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC')
+    >>> enr_a = UnsignedENR(
+    ... sequence_number=1,
+    ... kv_pairs={
+    ...     b'id': b'v4',
+    ...     b'secp256k1': private_key_a.public_key.to_compressed_bytes(),
+    ...     b'unicorns': b'rainbows',
+    ... }).to_signed_enr(private_key_a.to_bytes())
+    >>> enr_b = UnsignedENR(
+    ... sequence_number=7,
+    ... kv_pairs={
+    ...     b'id': b'v4',
+    ...     b'secp256k1': private_key_b.public_key.to_compressed_bytes(),
+    ...     b'unicorns': b'rainbows',
+    ...     b'cupcakes': b'sparkles',
+    ... }).to_signed_enr(private_key_b.to_bytes())
+    >>> enr_c = UnsignedENR(
+    ... sequence_number=2,
+    ... kv_pairs={
+    ...     b'id': b'v4',
+    ...     b'secp256k1': private_key_c.public_key.to_compressed_bytes(),
+    ... }).to_signed_enr(private_key_c.to_bytes())
+    >>> connection = sqlite3.connect(":memory:")
+    >>> enr_db = QueryableENRDB(connection)
+    >>> enr_db.set_enr(enr_a)
+    >>> enr_db.set_enr(enr_b)
+    >>> enrs_with_unicorns = tuple(enr_db.query(KeyExists(b'unicorns')))
+    >>> assert enr_a in enrs_with_unicorns
+    >>> assert enr_b in enrs_with_unicorns
+    >>> assert enr_c not in enrs_with_unicorns
+    >>> enrs_with_cupcakes = tuple(enr_db.query(KeyExists(b'cupcakes')))
+    >>> assert enr_a not in enrs_with_cupcakes
+    >>> assert enr_b in enrs_with_cupcakes
+    >>> assert enr_c not in enrs_with_cupcakes
