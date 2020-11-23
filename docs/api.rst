@@ -137,6 +137,12 @@ Constraints
     :show-inheritance:
 
 
+.. autoclass:: eth_enr.constraints.ClosestTo
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 Exceptions
 ----------
 

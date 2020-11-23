@@ -1,6 +1,6 @@
 import logging
 import sqlite3
-from typing import Iterable
+from typing import Iterable, Optional
 
 from eth_typing import NodeID
 from eth_utils import to_tuple
@@ -15,6 +15,7 @@ from eth_enr.constants import (
     UDP_PORT_ENR_KEY,
 )
 from eth_enr.constraints import (
+    ClosestTo,
     HasTCPIPv4Endpoint,
     HasTCPIPv6Endpoint,
     HasUDPIPv4Endpoint,
@@ -51,8 +52,24 @@ def _get_required_keys(*constraints: ConstraintAPI) -> Iterable[bytes]:
         elif isinstance(constraint, HasUDPIPv6Endpoint):
             yield IP_V6_ADDRESS_ENR_KEY
             yield UDP6_PORT_ENR_KEY
+        elif isinstance(constraint, ClosestTo):
+            continue
         else:
             raise TypeError(f"Unsupported constraint type: {type(constraint)}")
+
+
+def _get_order_closest_to(*constraints: ConstraintAPI) -> Optional[NodeID]:
+    closest_to_constraints = tuple(
+        constraint for constraint in constraints if isinstance(constraint, ClosestTo)
+    )
+    if len(closest_to_constraints) == 0:
+        return None
+    elif len(closest_to_constraints) == 1:
+        return closest_to_constraints[0].node_id
+    else:
+        raise ValueError(
+            f"Got multiple ClosestTo constraints: {closest_to_constraints}"
+        )
 
 
 class QueryableENRDB(ENRDatabaseAPI):
@@ -154,7 +171,7 @@ class QueryableENRDB(ENRDatabaseAPI):
         """
         Query the database for records that match the given constraints.
 
-        Support constrants:
+        Support constraints:
 
         - :class:`~eth_enr.constraints.KeyExists`
         - :class:`~eth_enr.constraints.HasTCPIPv4Endpoint`
@@ -166,5 +183,12 @@ class QueryableENRDB(ENRDatabaseAPI):
         with the highest sequence number for each node_id.
         """
         required_keys = _get_required_keys(*constraints)
-        for record in query_records(self.connection, required_keys=required_keys):
+        order_closest_to = _get_order_closest_to(*constraints)
+
+        records_iter = query_records(
+            self.connection,
+            required_keys=required_keys,
+            order_closest_to=order_closest_to,
+        )
+        for record in records_iter:
             yield record.to_enr()

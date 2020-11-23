@@ -1,3 +1,5 @@
+from eth_typing import NodeID
+
 from eth_enr.abc import ConstraintAPI
 
 
@@ -81,6 +83,25 @@ class HasTCPIPv6Endpoint(ConstraintAPI):
     """
 
     pass
+
+
+class ClosestTo(ConstraintAPI):
+    """
+    Constrains ENR database queries to return records proximate to a specific `node_id`
+
+    .. code-block:: python
+
+        >>> enr_db = ...
+        >>> node_id = ...
+        >>> from eth_enr.constraints import ClosestTo
+        >>> for enr in enr_db.query(ClosestTo(node_id)):
+        ...     print("ENR: ", enr)
+    """
+
+    node_id: NodeID
+
+    def __init__(self, node_id: NodeID) -> None:
+        self.node_id = node_id
 
 
 has_tcp_ipv4_endpoint = HasTCPIPv4Endpoint()
