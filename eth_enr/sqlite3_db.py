@@ -2,7 +2,7 @@ import datetime
 import logging
 import operator
 import sqlite3
-from typing import Collection, Iterable, NamedTuple, Tuple, Union
+from typing import Collection, Iterable, NamedTuple, Optional, Sequence, Tuple, Union
 
 from eth_typing import NodeID
 import rlp
@@ -16,6 +16,7 @@ logger = logging.getLogger("eth_enr.sqlite3")
 
 RECORD_CREATE_STATEMENT = """CREATE TABLE record (
     node_id BLOB NOT NULL,
+    short_node_id INTEGER NOT NULL,
     sequence_number INTEGER NOT NULL,
     signature BLOB NOT NULL,
     created_at DATETIME NOT NULL,
@@ -201,16 +202,18 @@ class Record(NamedTuple):
             fields=tuple(sorted(fields, key=operator.attrgetter("key"))),
         )
 
-    def to_database_params(self) -> Tuple[NodeID, int, bytes, str]:
+    def to_database_params(self) -> Tuple[NodeID, int, int, bytes, str]:
         return (
             self.node_id,
+            # The high 64 bits of the node_id for doing proximate queries
+            int.from_bytes(self.node_id, "big") >> 193,
             self.sequence_number,
             self.signature,
             self.created_at.isoformat(sep=" "),
         )
 
 
-RECORD_INSERT_QUERY = "INSERT INTO record (node_id, sequence_number, signature, created_at) VALUES (?, ?, ?, ?)"  # noqa: E501
+RECORD_INSERT_QUERY = "INSERT INTO record (node_id, short_node_id, sequence_number, signature, created_at) VALUES (?, ?, ?, ?, ?)"  # noqa: E501
 
 FIELD_INSERT_QUERY = (
     'INSERT INTO field (node_id, sequence_number, "key", value) VALUES (?, ?, ?, ?)'
@@ -297,6 +300,12 @@ BASE_QUERY = """SELECT
             record.sequence_number = field.sequence_number
     {where_statements}
     GROUP BY record.node_id
+    {order_by_statement}
+"""
+
+
+PROXIMATE_ORDER_BY_CLAUSE = """
+    ORDER BY ((?{PARAM_IDX} | record.short_node_id) - (?{PARAM_IDX} & record.short_node_id))
 """
 
 
@@ -311,22 +320,38 @@ EXISTS_CLAUSE = """EXISTS (
 
 
 def query_records(
-    conn: sqlite3.Connection, required_keys: Collection[bytes] = ()
+    conn: sqlite3.Connection,
+    required_keys: Sequence[bytes] = (),
+    order_closest_to: Optional[NodeID] = None,
 ) -> Iterable[Record]:
     num_required_keys = len(required_keys)
 
     if num_required_keys == 0:
-        query = BASE_QUERY.format(where_statements="")
+        where_clause = ""
     elif num_required_keys == 1:
-        query = BASE_QUERY.format(where_statements=f"WHERE {EXISTS_CLAUSE}")
+        where_clause = f"WHERE {EXISTS_CLAUSE}"
     else:
         query_components = tuple([f"({EXISTS_CLAUSE})"] * num_required_keys)
         combined_query_components = " AND ".join(query_components)
-        query = BASE_QUERY.format(where_statements=f"WHERE {combined_query_components}")
+        where_clause = f"WHERE {combined_query_components}"
 
-    logger.debug("query_records: query=%s  params=%r", query, required_keys)
+    if order_closest_to is None:
+        order_by_clause = ""
+        params = tuple(required_keys)
+    else:
+        order_by_clause = PROXIMATE_ORDER_BY_CLAUSE.format(
+            PARAM_IDX=num_required_keys + 1
+        )
+        short_node_id = int.from_bytes(order_closest_to, "big") >> 193
+        params = tuple(required_keys) + (short_node_id,)
 
-    for record_row in conn.execute(query, required_keys):
+    query = BASE_QUERY.format(
+        where_statements=where_clause, order_by_statement=order_by_clause
+    )
+
+    logger.debug("query_records: query=%s  params=%r", query, params)
+
+    for record_row in conn.execute(query, params):
         node_id, sequence_number, *_ = record_row
         field_rows = conn.execute(FIELD_GET_QUERY, (node_id, sequence_number))
 

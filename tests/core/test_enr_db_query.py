@@ -9,6 +9,7 @@ from eth_enr.constants import (
     UDP_PORT_ENR_KEY,
 )
 from eth_enr.constraints import (
+    ClosestTo,
     KeyExists,
     has_tcp_ipv4_endpoint,
     has_tcp_ipv6_endpoint,
@@ -196,3 +197,32 @@ def test_query_for_ipv6_endpoint(enr_db, constraint):
     enr = enr_results[0]
 
     assert enr == enr_b
+
+
+def test_query_with_order_by_closest(enr_db):
+    all_enrs = tuple(ENRFactory() for _ in range(4))
+
+    target, *enrs = all_enrs
+    target_node_id_as_int = int.from_bytes(target.node_id, "big")
+
+    def distance_fn(enr):
+        node_id_as_int = int.from_bytes(enr.node_id, "big")
+        return target_node_id_as_int ^ node_id_as_int
+
+    enrs_by_proximity = tuple(sorted(enrs, key=distance_fn))
+
+    for enr in enrs:
+        enr_db.set_enr(enr)
+
+    enrs_closest_to_target = tuple(enr_db.query(ClosestTo(target.node_id)))
+    assert enrs_closest_to_target == enrs_by_proximity
+
+    enrs_closest_to_target_with_ip = tuple(
+        enr_db.query(ClosestTo(target.node_id), KeyExists(b"ip"))
+    )
+    assert enrs_closest_to_target_with_ip == enrs_by_proximity
+
+    enrs_closest_to_target_with_ipv4_endpoint = tuple(
+        enr_db.query(ClosestTo(target.node_id), has_tcp_ipv4_endpoint)
+    )
+    assert enrs_closest_to_target_with_ipv4_endpoint == enrs_by_proximity
