@@ -5,7 +5,12 @@ from typing import Iterable, Optional
 from eth_typing import NodeID
 from eth_utils import to_tuple
 
-from eth_enr.abc import ENRAPI, ConstraintAPI, ENRDatabaseAPI, IdentitySchemeRegistryAPI
+from eth_enr.abc import (
+    ENRAPI,
+    ConstraintAPI,
+    IdentitySchemeRegistryAPI,
+    QueryableENRDatabaseAPI,
+)
 from eth_enr.constants import (
     IP_V4_ADDRESS_ENR_KEY,
     IP_V6_ADDRESS_ENR_KEY,
@@ -72,7 +77,7 @@ def _get_order_closest_to(*constraints: ConstraintAPI) -> Optional[NodeID]:
         )
 
 
-class QueryableENRDB(ENRDatabaseAPI):
+class QueryableENRDB(QueryableENRDatabaseAPI):
     """
     An implementation of :class:`eth_enr.abc.QueryableENRDatabaseAPI` on top of
     the ``sqlite3`` module from the standard library.

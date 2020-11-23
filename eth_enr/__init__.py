@@ -4,6 +4,7 @@ from eth_enr.abc import (  # noqa: F401
     ENRManagerAPI,
     IdentitySchemeAPI,
     IdentitySchemeRegistryAPI,
+    QueryableENRDatabaseAPI,
     UnsignedENRAPI,
 )
 from eth_enr.enr import ENR, UnsignedENR  # noqa: F401
