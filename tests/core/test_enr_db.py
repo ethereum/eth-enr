@@ -1,10 +1,10 @@
 import pytest
 
 from eth_enr.enr_db import ENRDB
-from eth_enr.exceptions import OldSequenceNumber, UnknownIdentityScheme
+from eth_enr.exceptions import DuplicateRecord, OldSequenceNumber, UnknownIdentityScheme
 from eth_enr.identity_schemes import IdentitySchemeRegistry
 from eth_enr.query_db import QueryableENRDB
-from eth_enr.tools.factories import ENRFactory, PrivateKeyFactory
+from eth_enr.tools.factories import ENRFactory, ENRManagerFactory, PrivateKeyFactory
 
 
 @pytest.fixture(params=("mapping", "orm"))
@@ -37,15 +37,6 @@ def test_get_and_set_enr(enr_db):
     db.set_enr(enr)
     assert db.get_enr(enr.node_id) == enr
 
-    updated_enr = ENRFactory(
-        private_key=private_key, sequence_number=enr.sequence_number + 1
-    )
-    db.set_enr(updated_enr)
-    assert db.get_enr(enr.node_id) == updated_enr
-
-    with pytest.raises(OldSequenceNumber):
-        db.set_enr(enr)
-
 
 def test_get_and_set_enr_with_non_standard_values(enr_db):
     custom_kv_pairs = {
@@ -68,6 +59,9 @@ def test_get_and_set_enr_with_non_standard_values(enr_db):
     result = enr_db.get_enr(enr.node_id)
     assert result == enr
 
+    # should be able to idempotently set the same record multiple times.
+    enr_db.set_enr(enr)
+
 
 def test_delete_enr(enr_db):
     db = enr_db
@@ -81,3 +75,51 @@ def test_delete_enr(enr_db):
 
     with pytest.raises(KeyError):
         db.get_enr(enr.node_id)
+
+
+def test_enr_db_raises_DuplicateRecord(enr_db):
+    private_key = PrivateKeyFactory().to_bytes()
+
+    enr_a = ENRFactory(
+        private_key=private_key,
+        sequence_number=1,
+        custom_kv_pairs={b"custom": b"enr-a"},
+    )
+    enr_b = ENRFactory(
+        private_key=private_key,
+        sequence_number=1,
+        custom_kv_pairs={b"custom": b"enr-b"},
+    )
+
+    assert enr_a.node_id == enr_b.node_id
+    assert enr_a.sequence_number == enr_b.sequence_number
+
+    assert enr_a != enr_b
+
+    # set it the first time.
+    enr_db.set_enr(enr_a)
+
+    with pytest.raises(DuplicateRecord):
+        enr_db.set_enr(enr_b, raise_on_error=True)
+
+    # without the flag it should silently ignore the error
+    enr_db.set_enr(enr_b)
+
+
+def test_enr_db_raises_OldSequenceNumber():
+    enr_db = ENRDB({})
+    enr_manager = ENRManagerFactory()
+
+    base_enr = enr_manager.enr
+
+    enr_manager.update((b"custom", b"test"))
+
+    assert enr_manager.enr.sequence_number == base_enr.sequence_number + 1
+
+    enr_db.set_enr(enr_manager.enr)
+
+    with pytest.raises(OldSequenceNumber):
+        enr_db.set_enr(base_enr, raise_on_error=True)
+
+    # without the flag it should silently ignore the error
+    enr_db.set_enr(base_enr)

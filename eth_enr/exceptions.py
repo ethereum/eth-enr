@@ -21,3 +21,12 @@ class OldSequenceNumber(BaseENRException):
     """
 
     pass
+
+
+class DuplicateRecord(BaseENRException):
+    """
+    Raised when trying to set an ENR record to a database that already has a
+    different record with the same sequence number.
+    """
+
+    pass
