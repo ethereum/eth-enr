@@ -65,7 +65,7 @@ storage is flexible and accepts any dictionary-like object.
     ...     b'secp256k1': private_key.public_key.to_compressed_bytes(),
     ... }).to_signed_enr(private_key.to_bytes())
     >>> enr_db.set_enr(updated_enr)
-    >>> enr_db.set_enr(enr)  # throws exception due to old sequence number
+    >>> enr_db.set_enr(enr, raise_on_error=True)  # throws exception due to old sequence number
     Traceback (most recent call last):
       File "/home/piper/.pyenv/versions/3.6.9/lib/python3.6/doctest.py", line 1330, in __run
         compileflags, 1), test.globs)

@@ -27,7 +27,7 @@ from eth_enr.constraints import (
     HasUDPIPv6Endpoint,
     KeyExists,
 )
-from eth_enr.exceptions import OldSequenceNumber, UnknownIdentityScheme
+from eth_enr.exceptions import DuplicateRecord, UnknownIdentityScheme
 from eth_enr.identity_schemes import default_identity_scheme_registry
 from eth_enr.sqlite3_db import (
     Record,
@@ -35,6 +35,7 @@ from eth_enr.sqlite3_db import (
     create_tables,
     delete_record,
     get_record,
+    get_record_at_sequence_number,
     insert_record,
     query_records,
 )
@@ -132,20 +133,30 @@ class QueryableENRDB(QueryableENRDatabaseAPI):
                 f"identity scheme registry"
             )
 
-    def set_enr(self, enr: ENRAPI) -> None:
+    def set_enr(self, enr: ENRAPI, raise_on_error: bool = False) -> None:
         """
         Write a record to the database.
 
-        Raises :class:`eth_enr.exceptions.OldSequenceNumber` if there is
-        already a record in the database with the same sequence number as the
-        provided ENR record.
+        Raise :class:`eth_enr.exceptions.DuplicateRecord` if there is
+        an different existing record with the same sequence number.
         """
         record = Record.from_enr(enr)
 
         try:
             insert_record(self.connection, record)
         except sqlite3.IntegrityError:
-            raise OldSequenceNumber(enr.sequence_number)
+            if raise_on_error:
+                record_from_db = get_record_at_sequence_number(
+                    self.connection,
+                    enr.node_id,
+                    enr.sequence_number,
+                )
+                if enr != record_from_db.to_enr():
+                    raise DuplicateRecord(
+                        "Database already has a different record for the same "
+                        f"public key with the same sequence number: enr={enr}  "
+                        f"from-db={record_from_db.to_enr()}"
+                    )
 
     def get_enr(self, node_id: NodeID) -> ENRAPI:
         """

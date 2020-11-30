@@ -153,6 +153,12 @@ Exceptions
     :show-inheritance:
 
 
+.. autoclass:: eth_enr.exceptions.DuplicateRecord
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 .. autoclass:: eth_enr.exceptions.UnknownIdentityScheme
     :members:
     :undoc-members:

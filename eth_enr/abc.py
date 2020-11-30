@@ -129,7 +129,7 @@ class IdentitySchemeAPI(ABC):
 
 class ENRDatabaseAPI(ABC):
     @abstractmethod
-    def set_enr(self, enr: ENRAPI) -> None:
+    def set_enr(self, enr: ENRAPI, raise_on_error: bool = False) -> None:
         ...
 
     @abstractmethod

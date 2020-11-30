@@ -6,7 +6,7 @@ import rlp
 
 from eth_enr import ENR
 from eth_enr.abc import ENRAPI, ENRDatabaseAPI, IdentitySchemeRegistryAPI
-from eth_enr.exceptions import OldSequenceNumber, UnknownIdentityScheme
+from eth_enr.exceptions import DuplicateRecord, OldSequenceNumber, UnknownIdentityScheme
 from eth_enr.identity_schemes import default_identity_scheme_registry
 
 
@@ -39,18 +39,36 @@ class ENRDB(ENRDatabaseAPI):
                 f"identity scheme registry"
             )
 
-    def set_enr(self, enr: ENRAPI) -> None:
-        existing_enr: Optional[ENRAPI]
+    def set_enr(self, enr: ENRAPI, raise_on_error: bool = False) -> None:
         self._validate_identity_scheme(enr)
+
+        enr_from_db: Optional[ENRAPI]
         try:
-            existing_enr = self.get_enr(enr.node_id)
+            enr_from_db = self.get_enr(enr.node_id)
         except KeyError:
-            existing_enr = None
-        if existing_enr and existing_enr.sequence_number > enr.sequence_number:
-            raise OldSequenceNumber(
-                f"Cannot overwrite existing ENR ({existing_enr.sequence_number}) with old one "
-                f"({enr.sequence_number})"
-            )
+            enr_from_db = None
+
+        if enr_from_db:
+            if enr_from_db.sequence_number == enr.sequence_number:
+                if enr_from_db != enr:
+                    if raise_on_error:
+                        raise DuplicateRecord(
+                            "Database already has a different record for the same "
+                            f"public key with the same sequence number: enr={enr}  "
+                            f"from-db={enr_from_db}"
+                        )
+                    else:
+                        return
+            elif enr_from_db.sequence_number > enr.sequence_number:
+                if raise_on_error:
+                    raise OldSequenceNumber(
+                        f"Cannot overwrite existing ENR: "
+                        f"enr-seq={enr.sequence_number}  "
+                        f"db-enr-seq={enr_from_db.sequence_number}"
+                    )
+                else:
+                    return
+
         self.db[self._get_enr_key(enr.node_id)] = rlp.encode(enr)
 
     def get_enr(self, node_id: NodeID) -> ENRAPI:

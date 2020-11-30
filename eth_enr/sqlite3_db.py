@@ -266,6 +266,34 @@ def get_record(conn: sqlite3.Connection, node_id: NodeID) -> Record:
     return record
 
 
+RECORD_GET_AT_SEQUENCE_NUMBER_QUERY = """SELECT
+    record.node_id AS record_node_id,
+    record.sequence_number AS record_sequence_number,
+    record.signature AS record_signature,
+    record.created_at AS record_created_at
+
+    FROM record
+    WHERE record.node_id = ? AND record.sequence_number == ?
+    ORDER BY record.sequence_number DESC
+    LIMIT 1
+"""
+
+
+def get_record_at_sequence_number(
+    conn: sqlite3.Connection, node_id: NodeID, sequence_number: int
+) -> Record:
+    record_row = conn.execute(
+        RECORD_GET_AT_SEQUENCE_NUMBER_QUERY, (node_id, sequence_number)
+    ).fetchone()
+    if record_row is None:
+        raise RecordNotFound(f"No record found: node_id={node_id.hex()}")
+    field_rows = conn.execute(FIELD_GET_QUERY, (node_id, sequence_number)).fetchall()
+
+    fields = tuple(Field.from_row(row) for row in field_rows)
+    record = Record.from_row(row=record_row, fields=fields)
+    return record
+
+
 DELETE_RECORD_QUERY = """DELETE FROM record WHERE record.node_id = ?"""
 DELETE_FIELD_QUERY = """DELETE FROM field WHERE field.node_id = ?"""
 
